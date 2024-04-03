@@ -15,17 +15,21 @@ const baseScrapeURL = "https://mhworld.kiranico.com"
 func ScrapeMonsterHitzonesTable(monsterPath string) (*hitzones.Table, error) {
 	t := hitzones.NewTable()
 	c := colly.NewCollector()
-	lookupIndexes := make(map[int]int)
 
 	c.OnHTML("table", func(tableElement *colly.HTMLElement) {
-		if title := tableElement.DOM.Parent().Prev(); !title.Is("h6") || title.Text() != "Physiology" {
+		if !isPhysiologyTable(tableElement) {
 			return
 		}
 
+		lookupIndexes := make(map[int]int)
 		tableElement.DOM.Find("thead > tr > th").Each(func(_ int, s *goquery.Selection) {
-			iconSrc, exists := s.Children().Attr("src")
+			iconSrc, srcExists := findIconSrcInTableHeader(s)
+			if !srcExists {
+				return
+			}
+
 			el := findElementByIconSrc(iconSrc)
-			if !s.Children().Is("img") || !exists || el == element.Unknown {
+			if el == element.Unknown {
 				return
 			}
 
@@ -35,7 +39,7 @@ func ScrapeMonsterHitzonesTable(monsterPath string) (*hitzones.Table, error) {
 
 		tableElement.DOM.Find("tbody > tr").Each(func(_ int, sr *goquery.Selection) {
 			for colIndex, lookupIndex := range lookupIndexes {
-				value, err := strconv.Atoi(sr.Find("td").Get(lookupIndex).FirstChild.Data)
+				value, err := findTableRowValueForColumnIndex(sr, lookupIndex)
 				if err == nil {
 					t.AddValueToColumn(colIndex, value)
 				}
@@ -48,6 +52,16 @@ func ScrapeMonsterHitzonesTable(monsterPath string) (*hitzones.Table, error) {
 	}
 
 	return t, nil
+}
+
+func isPhysiologyTable(e *colly.HTMLElement) bool {
+	title := e.DOM.Parent().Prev()
+	return title.Is("h6") && title.Text() == "Physiology"
+}
+
+func findIconSrcInTableHeader(s *goquery.Selection) (string, bool) {
+	iconSrc, srcExists := s.Children().Attr("src")
+	return iconSrc, s.Children().Is("img") && srcExists
 }
 
 func findElementByIconSrc(imgSrc string) element.Element {
@@ -73,4 +87,8 @@ func findElementByIconSrc(imgSrc string) element.Element {
 	default:
 		return element.Unknown
 	}
+}
+
+func findTableRowValueForColumnIndex(s *goquery.Selection, index int) (int, error) {
+	return strconv.Atoi(s.Find("td").Get(index).FirstChild.Data)
 }
