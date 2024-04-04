@@ -3,7 +3,7 @@ package hitzones
 import (
 	"slices"
 
-	"github.com/jgabriel1/mh-weakness-bot/lib/element"
+	"github.com/jgabriel1/mh-weakness-bot/internal/element"
 )
 
 type Column struct {

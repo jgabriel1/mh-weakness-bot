@@ -6,8 +6,8 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly/v2"
-	"github.com/jgabriel1/mh-weakness-bot/lib/element"
-	"github.com/jgabriel1/mh-weakness-bot/lib/hitzones"
+	"github.com/jgabriel1/mh-weakness-bot/internal/element"
+	"github.com/jgabriel1/mh-weakness-bot/internal/hitzones"
 )
 
 const baseScrapeURL = "https://mhworld.kiranico.com"
