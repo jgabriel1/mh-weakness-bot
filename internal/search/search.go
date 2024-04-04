@@ -8,10 +8,14 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/jgabriel1/mh-weakness-bot/lib/config"
+	"github.com/jgabriel1/mh-weakness-bot/internal/config"
 )
 
 const searchUrl string = "https://search.kiranico.gg/indexes/mhworld_en_docsearch/search"
+
+type SearchHandler struct {
+	config *config.Config
+}
 
 type SearchResponse struct {
 	Hits []SearchResult `json:"hits"`
@@ -23,17 +27,22 @@ type SearchResult struct {
 	URL  string `json:"url"`
 }
 
-func SearchMonsterName(q string) ([]SearchResult, error) {
-	searchAPIAuthKey, err := config.GetSearchAPIAuthKey()
-	if err != nil {
-		return []SearchResult{}, err
+func NewSearchHandler(config *config.Config) *SearchHandler {
+	return &SearchHandler{
+		config: config,
 	}
+}
 
+func (s *SearchHandler) SearchMonsterName(q string) ([]SearchResult, error) {
 	reqBody := fmt.Sprintf(`{"q":"%s"}`, q)
 
-	req, _ := http.NewRequest("POST", searchUrl, bytes.NewBufferString(reqBody))
+	req, err := http.NewRequest("POST", searchUrl, bytes.NewBufferString(reqBody))
+	if err != nil {
+		return []SearchResult{}, fmt.Errorf("failed to create http req = %w", err)
+	}
+
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", searchAPIAuthKey))
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", s.config.APIKey))
 
 	res, err := (&http.Client{}).Do(req)
 	if err != nil {
