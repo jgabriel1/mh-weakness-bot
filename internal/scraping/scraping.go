@@ -21,10 +21,10 @@ func ScrapeMonsterHitzonesTable(monsterPath string) (*hitzones.Table, error) {
 			return
 		}
 
-		lookupIndexes := make(map[int]int)
+		lookupIndexes := make([]int, 0)
 		tableElement.DOM.Find("thead > tr > th").Each(func(_ int, s *goquery.Selection) {
-			iconSrc, srcExists := findIconSrcInTableHeader(s)
-			if !srcExists {
+			iconSrc, ok := findIconSrcInTableHeader(s)
+			if !ok {
 				return
 			}
 
@@ -33,8 +33,8 @@ func ScrapeMonsterHitzonesTable(monsterPath string) (*hitzones.Table, error) {
 				return
 			}
 
-			colIndex := t.AddColumn(el)
-			lookupIndexes[colIndex] = s.Index()
+			t.AddColumn(el)
+			lookupIndexes = append(lookupIndexes, s.Index())
 		})
 
 		tableElement.DOM.Find("tbody > tr").Each(func(_ int, sr *goquery.Selection) {

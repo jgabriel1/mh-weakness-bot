@@ -19,9 +19,9 @@ func NewTable() *Table {
 	return &Table{Columns: []*Column{}}
 }
 
-func (t *Table) AddColumn(el element.Element) int {
-	t.Columns = append(t.Columns, &Column{Element: el, Data: []int{}})
-	return len(t.Columns) - 1
+func (t *Table) AddColumn(el element.Element) {
+	newCol := &Column{Element: el, Data: make([]int, 0)}
+	t.Columns = append(t.Columns, newCol)
 }
 
 func (t *Table) AddValueToColumn(colIndex int, value int) {
