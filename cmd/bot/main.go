@@ -1,10 +1,8 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/jgabriel1/mh-weakness-bot/internal/config"
-	"github.com/jgabriel1/mh-weakness-bot/internal/scraping"
+	"github.com/jgabriel1/mh-weakness-bot/internal/discord"
 	"github.com/jgabriel1/mh-weakness-bot/internal/search"
 )
 
@@ -13,19 +11,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
+	bot, err := discord.NewBot(config)
+	if err != nil {
+		panic(err)
+	}
 	searchHandler := search.NewSearchHandler(config)
-	results, err := searchHandler.SearchMonsterName("rajang")
-	if err != nil {
+	bot.Setup(searchHandler)
+	if err = bot.Run(); err != nil {
 		panic(err)
-	}
-
-	t, err := scraping.ScrapeMonsterHitzonesTable(results[0].URL)
-	if err != nil {
-		panic(err)
-	}
-
-	for _, col := range t.Columns {
-		fmt.Println(col)
 	}
 }

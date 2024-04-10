@@ -42,7 +42,7 @@ func (s *SearchHandler) SearchMonsterName(q string) ([]SearchResult, error) {
 	}
 
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", s.config.APIKey))
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", s.config.SearchAPIKey))
 
 	res, err := (&http.Client{}).Do(req)
 	if err != nil {

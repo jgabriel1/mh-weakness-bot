@@ -12,7 +12,8 @@ var (
 )
 
 type Config struct {
-	APIKey string `mapstructure:"SEARCH_API_AUTH_KEY"`
+	SearchAPIKey        string `mapstructure:"SEARCH_API_AUTH_KEY"`
+	DiscordBotAuthToken string `mapstructure:"DISCORD_BOT_AUTH_TOKEN"`
 }
 
 func NewConfig(path string) (*Config, error) {
