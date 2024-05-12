@@ -1,6 +1,7 @@
 package discord
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -11,8 +12,13 @@ import (
 	"github.com/jgabriel1/mh-weakness-bot/internal/search"
 )
 
+var commandFuncs = []NewCommandFunc{
+	NewMhwWeaknessCommand,
+}
+
 type Bot struct {
-	session *discordgo.Session
+	session  *discordgo.Session
+	commands []Command
 }
 
 func NewBot(c *config.Config) (*Bot, error) {
@@ -21,25 +27,54 @@ func NewBot(c *config.Config) (*Bot, error) {
 	if err != nil {
 		return nil, err
 	}
+	commands := make([]Command, 0)
+	for _, newCommand := range commandFuncs {
+		cmd := newCommand(c)
+		commands = append(commands, cmd)
+	}
 	return &Bot{
-		session: s,
+		session:  s,
+		commands: commands,
 	}, nil
 }
 
 func (b *Bot) Setup(sh *search.SearchHandler) {
 	b.session.Identify.Intents = discordgo.IntentsGuildMessages
-	b.session.AddHandler(makeWeaknessElementFromQueryHandler(sh))
+	for _, cmd := range b.commands {
+		b.session.AddHandler(cmd.Handle)
+	}
 }
 
-func (b *Bot) Run() error {
+func (b *Bot) withConnection(callback func() error) error {
 	err := b.session.Open()
 	if err != nil {
 		return err
 	}
 	defer b.session.Close()
-	fmt.Println("Bot is now running. Press CTRL-C to exit.")
-	<-waitUntilCancelled()
-	return err
+	if err = callback(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (b *Bot) Run() error {
+	return b.withConnection(func() error {
+		fmt.Println("Bot is now running. Press CTRL-C to exit.")
+		<-waitUntilCancelled()
+		return nil
+	})
+}
+
+func (b *Bot) CreateCommands(guildID string) error {
+	return b.withConnection(func() error {
+		for _, cmd := range b.commands {
+			err := cmd.Create(b.session, guildID)
+			if err != nil {
+				return errors.Join(err, errors.New("unable to create command"))
+			}
+		}
+		return nil
+	})
 }
 
 func waitUntilCancelled() chan os.Signal {
