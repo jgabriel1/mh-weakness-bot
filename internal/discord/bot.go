@@ -1,6 +1,7 @@
 package discord
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -45,30 +46,30 @@ func (b *Bot) Setup(sh *search.SearchHandler) {
 	}
 }
 
-func (b *Bot) withConnection(callback func() error) error {
+func (b *Bot) withConnection(ctx context.Context, callback func(ctx context.Context) error) error {
 	err := b.session.Open()
 	if err != nil {
 		return err
 	}
 	defer b.session.Close()
-	if err = callback(); err != nil {
+	if err = callback(ctx); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (b *Bot) Run() error {
-	return b.withConnection(func() error {
+	return b.withConnection(context.Background(), func(_ context.Context) error {
 		fmt.Println("Bot is now running. Press CTRL-C to exit.")
 		<-waitUntilCancelled()
 		return nil
 	})
 }
 
-func (b *Bot) CreateCommands(guildID string) error {
-	return b.withConnection(func() error {
+func (b *Bot) CreateCommands(ctx context.Context, guildID string) error {
+	return b.withConnection(ctx, func(ctx context.Context) error {
 		for _, cmd := range b.commands {
-			err := cmd.Create(b.session, guildID)
+			err := cmd.Create(ctx, b.session, guildID)
 			if err != nil {
 				return errors.Join(err, errors.New("unable to create command"))
 			}
