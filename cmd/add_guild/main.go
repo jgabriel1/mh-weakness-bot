@@ -1,7 +1,10 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"log"
+	"time"
 
 	"github.com/jgabriel1/mh-weakness-bot/internal/config"
 	"github.com/jgabriel1/mh-weakness-bot/internal/discord"
@@ -19,7 +22,22 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	if err = bot.CreateCommands(guildID); err != nil {
-		panic(err)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	errChan := make(chan error, 1)
+
+	go func() {
+		if err = bot.CreateCommands(ctx, guildID); err != nil {
+			errChan <- err
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		log.Fatalf("context cancelled: %v", ctx.Err())
+	case err := <-errChan:
+		log.Fatalf("error creating command: %v", err)
 	}
 }

@@ -1,6 +1,7 @@
 package discord
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -24,7 +25,7 @@ func NewMhwWeaknessCommand(c *config.Config) Command {
 	return &MhwWeaknessCommand{searchHandler: sh}
 }
 
-func (cmd *MhwWeaknessCommand) Create(s *discordgo.Session, guildID string) error {
+func (cmd *MhwWeaknessCommand) Create(ctx context.Context, s *discordgo.Session, guildID string) error {
 	_, err := s.ApplicationCommandCreate(s.State.Application.ID, guildID, &discordgo.ApplicationCommand{
 		Name:        mhwWeaknessCommandName,
 		Description: mhwWeaknessCommandDescription,
